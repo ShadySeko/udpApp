@@ -27,7 +27,7 @@ public class Device {
         this.serverPort = serverPort;
         this.type = type;
         this.status = status;
-        this.id = Long.parseLong(String.valueOf(System.currentTimeMillis()).substring(4));
+        this.id = Long.parseLong(String.valueOf(System.currentTimeMillis()).substring(4)); //Unique identifier based on current time
     }
 
     public String getStatus() {
@@ -44,7 +44,7 @@ public class Device {
     public void changeStatus(String newStatus) throws Exception {
         this.status = newStatus;
         statusHistory.add(newStatus);
-        String message = id + " " + type + " " + status + " at_" + LocalDateTime.now();
+        String message = id + "," + type + "," + status + ",at_" + LocalDateTime.now();
         byte[] buffer = message.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, serverPort);
         System.out.println("Sending status: to " + serverAddress + ":" + serverPort);
@@ -53,6 +53,10 @@ public class Device {
 
     public ArrayList<String> getStatusHistory() {
         return statusHistory;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public void changeStatusNoNotify(String newStatus) throws Exception {

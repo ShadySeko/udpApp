@@ -35,7 +35,7 @@ public class Client {
         byte[] buffer = deviceIp.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, serverPort);
         socket.send(packet);
-        buffer = new byte[1024];
+        buffer = new byte[2048];
         packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
         return new String(packet.getData(), 0, packet.getLength());
@@ -54,7 +54,7 @@ public class Client {
     public void startRepl() {
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            System.out.println("Enter command (device ID to request status, 'LIST' to get list of devices, LOG <ID> to get all status updates since start): ");
+            System.out.println("Enter command (device '<ID>' to request current status of device, 'LIST' to get list of available devices, 'LOG <ID>' to get all status updates since start): ");
             String command = scanner.nextLine();
             String[] commandParts = command.split(" ");
             try {

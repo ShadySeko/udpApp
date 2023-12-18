@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,10 +15,11 @@ public class Device {
     private DatagramSocket socket;
     private InetAddress serverAddress = InetAddress.getLocalHost(); // default
     private int serverPort;
-
     private String type = "device";
-
     private final long id;
+
+    private final ArrayList<String> statusHistory = new ArrayList<>(); // Store the log
+
 
     public Device(String type, String status, String serverIp, int serverPort) throws Exception {
         this.socket = new DatagramSocket();
@@ -41,6 +43,7 @@ public class Device {
 
     public void changeStatus(String newStatus) throws Exception {
         this.status = newStatus;
+        statusHistory.add(newStatus);
         String message = id + " " + type + " " + status + " at_" + LocalDateTime.now();
         byte[] buffer = message.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, serverPort);
@@ -48,10 +51,14 @@ public class Device {
         socket.send(packet);
     }
 
-    public void changeStatusNoNotify(String newStatus) throws Exception {
-        this.status = newStatus;
+    public ArrayList<String> getStatusHistory() {
+        return statusHistory;
     }
 
+    public void changeStatusNoNotify(String newStatus) throws Exception {
+        this.status = newStatus;
+        this.statusHistory.add(newStatus + " at " + LocalDateTime.now());
+    }
     public void listenForRequests() {
         try {
             while (true) {

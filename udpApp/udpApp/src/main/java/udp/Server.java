@@ -4,6 +4,8 @@ package udp;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.StringJoiner;
 
@@ -18,9 +20,20 @@ public class Server {
         this.devices = new ConcurrentHashMap<>();
     }
 
-    public void start() {
-        new Thread(this::listenForDeviceStatus).start();
-        new Thread(this::listenForClientRequests).start();
+    public void start() throws UnknownHostException {
+        System.out.println("Server started at " + InetAddress.getLocalHost() + " on ports " + deviceSocket.getLocalPort() + " and " + clientSocket.getLocalPort() + ".");
+
+        Thread deviceThread = new Thread(this::listenForDeviceStatus);
+        Thread clientThread = new Thread(this::listenForClientRequests);
+        deviceThread.start();
+        clientThread.start();
+        try {
+            deviceThread.join();
+            clientThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void listenForDeviceStatus() {
@@ -28,10 +41,21 @@ public class Server {
             while (true) {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                System.out.println("Listening for device status on port " + deviceSocket.getLocalPort());
                 deviceSocket.receive(packet);
-                String status = new String(packet.getData(), 0, packet.getLength());
-                devices.put(packet.getAddress().getHostAddress(), new Device("default", status, packet.getAddress().getHostAddress(), packet.getPort()));
-            }
+                System.out.println("Received device status from " + packet.getAddress() + ":" + packet.getPort());
+                String message = new String(packet.getData(), 0, packet.getLength());
+                System.out.println("Status: " + message);
+                String[] parts = message.split(" ");
+                String id = parts[0];
+                String status = parts[2];
+                System.out.println("NEW UUID?: " + id);
+                if(devices.containsKey(id)){
+                    devices.get(id).changeStatusNoNotify(parts[2]);
+                }else{
+                devices.put(id, new Device(parts[1], parts[2], "localhost", 1234));
+            }}
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -42,20 +66,26 @@ public class Server {
             while (true) {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                System.out.println("Listening for client requests... on port " + clientSocket.getLocalPort() + "...");
                 clientSocket.receive(packet);
+                System.out.println("Received client request from " + packet.getAddress() + ":" + packet.getPort());
                 String request = new String(packet.getData(), 0, packet.getLength());
-                if ("device_count".equals(request)) {
+                if ("LIST".equals(request)) {
                     StringJoiner deviceList = new StringJoiner(",");
-                    for (String deviceIp : devices.keySet()) {
-                        deviceList.add(deviceIp);
+                    for (String deviceUuid : devices.keySet()) {
+                        deviceList.add(deviceUuid);
                     }
+                   // System.out.println(deviceList.toString());
                     buffer = deviceList.toString().getBytes();
                     packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
                     clientSocket.send(packet);
                 } else {
                     Device device = devices.get(request);
                     if (device != null) {
-                        device.sendStatus();
+                        String status = device.getStatus();
+                        buffer = status.getBytes();
+                        packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
+                        clientSocket.send(packet);
                     }
                 }
             }

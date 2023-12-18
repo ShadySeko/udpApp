@@ -20,16 +20,22 @@ public class Client {
         this.socket.setSoTimeout(TIMEOUT);
     }
 
-    public void requestStatus(String deviceIp) throws Exception {
+    public String requestStatus(String deviceIp) throws Exception {
         byte[] buffer = deviceIp.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, serverPort);
         socket.send(packet);
+        buffer = new byte[1024];
+        packet = new DatagramPacket(buffer, buffer.length);
+        socket.receive(packet);
+        return new String(packet.getData(), 0, packet.getLength());
     }
 
     public String requestDeviceCount() throws Exception {
-        byte[] buffer = "device_count".getBytes();
+        byte[] buffer = "LIST".getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, serverPort);
         socket.send(packet);
+        buffer = new byte[1024];
+        packet = new DatagramPacket(buffer, buffer.length);
         socket.receive(packet);
         return new String(packet.getData(), 0, packet.getLength());
     }
@@ -37,10 +43,10 @@ public class Client {
     public void startRepl() {
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            System.out.print("Enter command (device IP to request status or 'device_count' to get list of devices): ");
+            System.out.println("Enter command (device IP to request status or 'LIST' to get list of devices): ");
             String command = scanner.nextLine();
             try {
-                if ("device_count".equals(command)) {
+                if ("LIST".equals(command)) {
                     int retries = 0;
                     while (retries < MAX_RETRIES) {
                         try {
@@ -58,7 +64,8 @@ public class Client {
                     int retries = 0;
                     while (retries < MAX_RETRIES) {
                         try {
-                            requestStatus(command);
+                            String status = requestStatus(command);
+                            System.out.println("Status of " + command + ": " + status);
                             break;
                         } catch (SocketTimeoutException e) {
                             retries++;

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  server:
+    build: .
+    command: ["java", "-jar", "udp.jar", "server"]
+    ports:
+      - "5678:5678"
+
+  client:
+    build: .
+    command: ["java", "-jar", "udp.jar", "client"]
+    # No ports are exposed for client by default, add if needed
+
+  device:
+    build: .
+    command: ["java", "-jar", "udp.jar", "device"]
+    # Ports and other configurations for device go here
+

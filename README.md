@@ -26,8 +26,8 @@ This IoT Network Application is designed to facilitate communication between IoT
    - Input: `LOG <DeviceID>`
    - Output: Log entries for the specified device.
 
-## Edge-Cases in Application Protocol
-
+### Edge-Cases
+  
 The IoT Network Application, utilizing UDP for communication, inherently faces certain edge-cases and limitations which are detailed below:
 
 1. UDP Packet Loss: UDP does not guarantee packet delivery, order, or integrity. Thus, there is a possibility of:

@@ -46,7 +46,7 @@ public class Server {
                 deviceSocket.receive(packet);
                 System.out.println("Received device status from " + packet.getAddress() + ":" + packet.getPort());
                 String message = new String(packet.getData(), 0, packet.getLength());
-                String[] parts = message.split(" ");
+                String[] parts = message.split(",");
                 String id = parts[0];
                 String status = parts[2];
                 if(devices.containsKey(id)){
@@ -73,7 +73,7 @@ public class Server {
                 if ("LIST".equals(parts[0])) {
                     StringJoiner deviceList = new StringJoiner(",");
                     for (String deviceUuid : devices.keySet()) {
-                        deviceList.add(deviceUuid);
+                        deviceList.add(devices.get(deviceUuid).getType() +" "+ deviceUuid);
                     }
                     // System.out.println(deviceList.toString());
                     buffer = deviceList.toString().getBytes();

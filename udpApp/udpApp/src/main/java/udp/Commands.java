@@ -7,7 +7,9 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "app", mixinStandardHelpOptions = true, version = "udp 1.0",
-        description = "UDP client/server application",
+        description = {"UDP client/server application",
+        "This application allows you to simulate a simple IoT network.",
+        "Use the 'server', 'client' and 'device' subcommands to start the different components"},
         subcommands = {Commands.ServerCommand.class, Commands.ClientCommand.class, Commands.DeviceCommand.class})
 public class Commands implements Runnable {
     @Override
@@ -65,7 +67,7 @@ public class Commands implements Runnable {
         @Option(names = {"-p", "--port"}, description = "Port")
         private int port = 1234;
 
-        @Option(names = {"-t", "--type"}, description = "Type")
+        @Option(names = {"-t", "--type"}, description = "Type of device, can be anything, door, light, etc.")
         private String type = "default";
 
         @Override

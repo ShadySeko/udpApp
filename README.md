@@ -26,6 +26,27 @@ This IoT Network Application is designed to facilitate communication between IoT
 - Input: `LOG <DeviceID>`
 - Output: Log entries for the specified device.
 
+## Edge-Cases in Application Protocol
+
+The IoT Network Application, utilizing UDP for communication, inherently faces certain edge-cases and limitations which are detailed below:
+
+1. UDP Packet Loss: UDP does not guarantee packet delivery, order, or integrity. Thus, there is a possibility of:
+- Lost or dropped packets during transmission.
+- Packets arriving out of order.
+- Corrupted packets being received.
+
+2. Buffer Size Limitation:
+- Each UDP packet has a limited buffer size (2048 bytes in our implementation). If a message exceeds this size, it will be truncated, leading to incomplete data transmission.
+
+3. Concurrency Issues:
+- Multiple devices sending status updates simultaneously can lead to concurrent access issues on the server side. This scenario could potentially cause race conditions or data corruption.
+
+4. Address Resolution:
+- Misconfiguration or network issues may lead to the server or devices being assigned incorrect IP addresses, resulting in failed communications.
+
+5. Timeouts and Retries:
+- Network delays or high traffic could cause timeouts in client requests. The client implements a retry mechanism, but excessive retries might indicate network issues.
+
 ## Building and Publishing with Docker
 ### Prerequisites
 - Docker

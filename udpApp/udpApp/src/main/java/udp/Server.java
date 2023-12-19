@@ -1,19 +1,20 @@
-// Server.java
 package udp;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 public class Server {
-    private DatagramSocket deviceSocket;
-    private DatagramSocket clientSocket;
-    private ConcurrentHashMap<String, Device> devices;
+    private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
+    private static final int BUFFER_SIZE = 1024;
+
+    private final DatagramSocket deviceSocket;
+    private final DatagramSocket clientSocket;
+    private final ConcurrentHashMap<String, Device> devices;
 
     public Server(int devicePort, int clientPort) throws Exception {
         this.deviceSocket = new DatagramSocket(devicePort);
@@ -22,87 +23,101 @@ public class Server {
     }
 
     public void start() throws UnknownHostException {
-        System.out.println("Server started at " + InetAddress.getLocalHost() + " on ports " + deviceSocket.getLocalPort() + " and " + clientSocket.getLocalPort() + ".");
+        LOGGER.info("Server started at " + InetAddress.getLocalHost() + " on ports " + deviceSocket.getLocalPort() + " and " + clientSocket.getLocalPort() + ".");
 
         Thread deviceThread = new Thread(this::listenForDeviceStatus);
         Thread clientThread = new Thread(this::listenForClientRequests);
         deviceThread.start();
         clientThread.start();
+
         try {
             deviceThread.join();
             clientThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
     }
 
     private void listenForDeviceStatus() {
-        try {
-            while (true) {
-                byte[] buffer = new byte[1024];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                System.out.println("Listening for device status on port " + deviceSocket.getLocalPort());
-                deviceSocket.receive(packet);
-                System.out.println("Received device status from " + packet.getAddress() + ":" + packet.getPort());
-                String message = new String(packet.getData(), 0, packet.getLength());
-                String[] parts = message.split(",");
-                String id = parts[0];
-                String status = parts[2];
-                if(devices.containsKey(id)){
-                    devices.get(id).changeStatusNoNotify(parts[2]);
-                }else{
-                devices.put(id, new Device(parts[1], parts[2], "localhost", 1234));
-            }}
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        while (true) {
+            try {
+                DatagramPacket packet = receivePacket(deviceSocket);
+                processDeviceStatus(packet);
+            } catch (Exception e) {
+                LOGGER.severe("Error in listenForDeviceStatus: " + e.getMessage());
+            }
         }
     }
 
     private void listenForClientRequests() {
-        try {
-            while (true) {
-                byte[] buffer = new byte[1024];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                System.out.println("Listening for client requests... on port " + clientSocket.getLocalPort() + "...");
-                clientSocket.receive(packet);
-                System.out.println("Received client request from " + packet.getAddress() + ":" + packet.getPort());
-                String request = new String(packet.getData(), 0, packet.getLength());
-                String[] parts = request.split(" ");
-                if ("LIST".equals(parts[0])) {
-                    StringJoiner deviceList = new StringJoiner(",");
-                    for (String deviceUuid : devices.keySet()) {
-                        deviceList.add(devices.get(deviceUuid).getType() +" "+ deviceUuid);
-                    }
-                    // System.out.println(deviceList.toString());
-                    buffer = deviceList.toString().getBytes();
-                    packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
-                    clientSocket.send(packet);
-                }else if("LOG".equals(parts[0])){
-                    Device device = devices.get(parts[1]);
-                    if (device != null) {
-                        ArrayList<String> statusHistory = device.getStatusHistory();
-                        StringJoiner statusList = new StringJoiner(",");
-                        for (String status : statusHistory) {
-                            statusList.add(status);
-                        }
-                        buffer = statusList.toString().getBytes();
-                        packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
-                        clientSocket.send(packet);
-                    }
-                } else {
-                    Device device = devices.get(request);
-                    if (device != null) {
-                        String status = device.getStatus();
-                        buffer = status.getBytes();
-                        packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
-                        clientSocket.send(packet);
-                    }
-                }
+        while (true) {
+            try {
+                DatagramPacket packet = receivePacket(clientSocket);
+                processClientRequest(packet);
+            } catch (Exception e) {
+                LOGGER.severe("Error in listenForClientRequests: " + e.getMessage());
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+    }
+
+    private DatagramPacket receivePacket(DatagramSocket socket) throws Exception {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        socket.receive(packet);
+        return packet;
+    }
+
+    private void processDeviceStatus(DatagramPacket packet) throws Exception {
+        String message = new String(packet.getData(), 0, packet.getLength());
+        String[] parts = message.split(",");
+        String id = parts[0];
+        if (devices.containsKey(id)) {
+            devices.get(id).changeStatusNoNotify(parts[2]);
+        } else {
+            devices.put(id, new Device(parts[1], parts[2], "localhost", 1234));
+        }
+    }
+
+    private void processClientRequest(DatagramPacket packet) throws Exception {
+        String request = new String(packet.getData(), 0, packet.getLength());
+        String[] parts = request.split(" ");
+        if ("LIST".equals(parts[0])) {
+            sendClientResponse(clientSocket, packet.getAddress(), packet.getPort(), getDeviceList());
+        } else if ("LOG".equals(parts[0])) {
+            sendClientResponse(clientSocket, packet.getAddress(), packet.getPort(), getDeviceLog(parts[1]));
+        } else {
+            sendClientResponse(clientSocket, packet.getAddress(), packet.getPort(), getDeviceStatus(request));
+        }
+    }
+
+    private String getDeviceList() {
+        StringJoiner deviceList = new StringJoiner(",");
+        for (String deviceId : devices.keySet()) {
+            deviceList.add(devices.get(deviceId).getType() + " " + deviceId);
+        }
+        return deviceList.toString();
+    }
+
+    private String getDeviceLog(String deviceId) {
+        Device device = devices.get(deviceId);
+        if (device != null) {
+            StringJoiner statusList = new StringJoiner(",");
+            for (String status : device.getStatusHistory()) {
+                statusList.add(status);
+            }
+            return statusList.toString();
+        }
+        return "Device not found";
+    }
+
+    private String getDeviceStatus(String deviceId) {
+        Device device = devices.get(deviceId);
+        return device != null ? device.getStatus() : "Device not found";
+    }
+
+    private void sendClientResponse(DatagramSocket socket, InetAddress address, int port, String response) throws Exception {
+        byte[] buffer = response.getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, port);
+        socket.send(packet);
     }
 }

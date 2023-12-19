@@ -16,11 +16,11 @@ This IoT Network Application is designed to facilitate communication between IoT
 
 ### Messages/Actions
 
-1. Request Device Count (LIST)
+1. Request Device List
 - Input: `LIST`
 - Output: Comma-separated list of device IDs.
 2. Request Device Status
-- input: Device ID
+- input: `<Device ID>`
 - Output: Current status of the specified device.
 3. Request Log (LOG)
 - Input: `LOG <DeviceID>`

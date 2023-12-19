@@ -14,6 +14,7 @@ public class Client {
     private static final int BUFFER_SIZE = 2048;
     private static final String COMMAND_LIST = "LIST";
     private static final String COMMAND_LOG = "LOG";
+    private static final String COMMAND_STATUS = "STATUS";
 
     public Client(String serverIp, int serverPort) throws Exception {
         this.socket = new DatagramSocket();
@@ -32,33 +33,29 @@ public class Client {
         return new String(packet.getData(), 0, packet.getLength());
     }
 
-    public String requestLog(String deviceIp) throws Exception {
-        return sendRequest(COMMAND_LOG + " " + deviceIp);
-    }
-
     public String requestStatus(String deviceIp) throws Exception {
         return sendRequest(deviceIp);
-    }
-
-    public String requestDeviceCount() throws Exception {
-        return sendRequest(COMMAND_LIST);
     }
 
     private void processCommand(String command) {
         try {
             String response;
             if (COMMAND_LIST.equals(command)) {
-                response = requestDeviceCount();
+                response = sendRequest(COMMAND_LIST);
                 System.out.println("Available devices: " + response);
             } else if (command.startsWith(COMMAND_LOG)) {
-                response = requestLog(command.split(" ")[1]);
+                String deviceId = command.split(" ")[1];
+                response = sendRequest(COMMAND_LOG + " " + deviceId);
                 System.out.println("Status changes for " + command.split(" ")[1] + ":");
                 for (String status : response.split(",")) {
                     System.out.println(status);
                 }
+            } else if (command.startsWith(COMMAND_STATUS)) {
+                String deviceId = command.split(" ")[1];
+                response = requestStatus(COMMAND_STATUS + " " + deviceId);
+                System.out.println("Status of device (" + deviceId + "): " + response);
             } else {
-                response = requestStatus(command);
-                System.out.println("Status of " + command + ": " + response);
+                System.out.println("Unknown command.");
             }
         } catch (Exception e) {
             System.out.println("An error occurred: " + e.getMessage());

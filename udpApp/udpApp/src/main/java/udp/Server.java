@@ -15,6 +15,9 @@ public class Server {
     private final DatagramSocket deviceSocket;
     private final DatagramSocket clientSocket;
     private final ConcurrentHashMap<String, Device> devices;
+    private static final String COMMAND_LIST = "LIST";
+    private static final String COMMAND_LOG = "LOG";
+    private static final String COMMAND_STATUS = "STATUS";
 
     public Server(int devicePort, int clientPort) throws Exception {
         this.deviceSocket = new DatagramSocket(devicePort);
@@ -81,12 +84,14 @@ public class Server {
     private void processClientRequest(DatagramPacket packet) throws Exception {
         String request = new String(packet.getData(), 0, packet.getLength());
         String[] parts = request.split(" ");
-        if ("LIST".equals(parts[0])) {
+        if (COMMAND_LIST.equals(parts[0])) {
             sendClientResponse(clientSocket, packet.getAddress(), packet.getPort(), getDeviceList());
-        } else if ("LOG".equals(parts[0])) {
+        } else if (COMMAND_LOG.equals(parts[0])) {
             sendClientResponse(clientSocket, packet.getAddress(), packet.getPort(), getDeviceLog(parts[1]));
+        } else if (COMMAND_STATUS.equals(parts[0])) {
+            sendClientResponse(clientSocket, packet.getAddress(), packet.getPort(), getDeviceStatus(parts[1]));
         } else {
-            sendClientResponse(clientSocket, packet.getAddress(), packet.getPort(), getDeviceStatus(request));
+            System.out.println("Unknown command received.");
         }
     }
 

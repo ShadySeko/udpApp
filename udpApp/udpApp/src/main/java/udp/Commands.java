@@ -8,14 +8,15 @@ import picocli.CommandLine.Option;
 
 @Command(name = "app", mixinStandardHelpOptions = true, version = "udp 1.0",
         description = {"UDP client/server application",
-        "This application allows you to simulate a simple IoT network.",
-        "Use the 'server', 'client' and 'device' subcommands to start the different components"},
+                "This application allows you to simulate a simple IoT network.",
+                "Use the 'server', 'client' and 'device' subcommands to start the different components"},
         subcommands = {Commands.ServerCommand.class, Commands.ClientCommand.class, Commands.DeviceCommand.class})
 public class Commands implements Runnable {
     @Override
     public void run() {
         // default behavior when no subcommand is specified
     }
+
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Commands()).execute(args);
         System.exit(exitCode);
@@ -30,7 +31,6 @@ public class Commands implements Runnable {
 
         @Option(names = {"-c", "--client-port"}, description = "Client port")
         private int clientPort = 5678;
-
 
 
         @Override
@@ -73,7 +73,7 @@ public class Commands implements Runnable {
         @Override
         public void run() {
             try {
-                Device device = new Device(type,"default", "localhost", port);
+                Device device = new Device(type, "default", "localhost", port);
                 device.start();
             } catch (Exception e) {
                 e.printStackTrace();

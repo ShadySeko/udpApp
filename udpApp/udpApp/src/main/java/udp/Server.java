@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 public class Server {
     private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
-    private static final int BUFFER_SIZE = 1024;
+    private static final int BUFFER_SIZE = 2048;
 
     private final DatagramSocket deviceSocket;
     private final DatagramSocket clientSocket;

@@ -3,6 +3,8 @@
 This IoT Network Application is designed to facilitate communication between IoT devices and a central server using UDP protocol. It enables the management of device statuses and log retrieval through a client-server architecture. This README outlines the application's protocol, setup, and usage instructions.
 
 ## Application Protocol
+![Diagram](iot.drawio.png)
+
 ### Protocol Overview
 - Protocol Type: UDP (User Datagram Protocol)
 - Ports:

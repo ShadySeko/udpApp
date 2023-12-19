@@ -11,23 +11,9 @@ services:
   client:
     build: .
     command: java -jar udp.jar client
-    stdin_open: true
-    tty: true
-    depends_on:
-      - server
 
-  device1:
+  device:
     build: .
-    command: java -jar udp.jar device --port 1234 --type "Light"
-    stdin_open: true
-    tty: true
-    depends_on:
-      - server
-
-  device2:
-    build: .
-    command: java -jar udp.jar device --port 1234 --type "Thermostat"
-    stdin_open: true
-    tty: true
-    depends_on:
-      - server
+    command: java -jar udp.jar device --port 1234 --type "${DEVICE_TYPE}"
+    environment:
+      DEVICE_TYPE: default # Default device type

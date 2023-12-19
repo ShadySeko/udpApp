@@ -61,7 +61,14 @@ The IoT Network Application, utilizing UDP for communication, inherently faces c
 
 ## Running the Application
 ### With Docker Compose
-1. Start the application: `docker-compose up`
+1. Start the application like the following:
+   - `java -jar udp.jar server` : Starts the server
+   - `java -jar udp.jar client` : Starts the client
+   - `java -jar udp.jar device --type="Lamp"` : Starts a device
+2. Start the application with either of these commands if you are using `Docker`:
+   - `docker-compose up server`
+   - `docker-compose up client`
+   - `docker-compose up device`
 2. To interact with the client in a separate terminal: `docker attach <client-container-name>`
 
 ## Docker hub

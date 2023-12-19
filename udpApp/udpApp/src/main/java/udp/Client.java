@@ -42,7 +42,7 @@ public class Client {
             String response;
             if (COMMAND_LIST.equals(command)) {
                 response = sendRequest(COMMAND_LIST);
-                System.out.println("Available devices: " + response);
+                System.out.println("Available devices: " + (response.isEmpty() ? "<EMPTY>" : response));
             } else if (command.startsWith(COMMAND_LOG)) {
                 String deviceId = command.split(" ")[1];
                 response = sendRequest(COMMAND_LOG + " " + deviceId);
@@ -64,10 +64,18 @@ public class Client {
 
     public void startRepl() {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter command ('LIST' for devices, '<ID>' for status, 'LOG <ID>' for log):");
-        while (scanner.hasNextLine()) {
-            String command = scanner.nextLine();
-            processCommand(command);
+        System.out.println("Enter command ('LIST' for devices, 'STATUS <ID>' for status, 'LOG <ID>' for log):");
+
+        while (true) {
+            System.out.print("COMMAND > ");
+            if (scanner.hasNextLine()) {
+                String command = scanner.nextLine();
+                processCommand(command);
+            } else {
+                break;
+            }
         }
     }
+
+
 }
